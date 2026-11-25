@@ -490,6 +490,9 @@
 </head>
 <body>
 
+    <!-- Christmas MP3 Audio -->
+    <audio id="xmas-audio" src="./christmas-music.mp3" loop preload="auto"></audio>
+
     <!-- Top Christmas Lights -->
     <div class="light-rope">
         <div class="bulb"></div><div class="bulb"></div><div class="bulb"></div>
@@ -601,7 +604,7 @@
                 </div>
             </div>
 
-            <!-- Add Member -->
+            <!-- Add Member to `users` collection -->
             <div class="flex-row">
                 <input type="text" id="new-member-name" placeholder="Enter member name..." style="padding: 11px;">
                 <button id="add-member-btn" class="btn btn-primary" style="width: auto; padding: 11px 18px;">Add</button>
@@ -609,7 +612,7 @@
 
             <div class="admin-list" id="admin-member-list"></div>
 
-            <button id="reset-matches-btn" class="btn btn-secondary" style="background: #9b001c; margin-top: 2px;">🔄 Reset All Matches</button>
+            <button id="reset-matches-btn" class="btn btn-secondary" style="background: #9b001c; margin-top: 2px;">🔄 Reset Selections</button>
             <button id="close-admin-btn" class="btn btn-secondary">← Back to App</button>
         </div>
     </div>
@@ -645,94 +648,41 @@
         const db = getFirestore(app);
 
         // Firestore Collections
-        const participantsCol = collection(db, "secret_santa_participants");
-        const matchesCol = collection(db, "secret_santa_matches"); // Separate table/collection for pairs
-        const eventSettingsDocRef = doc(db, "secret_santa_settings", "event_config");
+        const usersCol = collection(db, "users");
+        const selectedCol = collection(db, "selected");
+        const eventSettingsDocRef = doc(db, "event_settings", "event_config");
 
-        // Festive Web Audio Melody ("Jingle Bells" gentle chime loop)
-        let audioCtx = null;
+        // MP3 Audio Control
+        const xmasAudio = document.getElementById("xmas-audio");
+        const soundBtn = document.getElementById("sound-toggle-btn");
         let isMuted = false;
-        let musicTimer = null;
-        let noteIndex = 0;
 
-        // Frequencies (Hz) for Jingle Bells opening phrase
-        const melody = [
-            { f: 659.25, d: 0.25 }, { f: 659.25, d: 0.25 }, { f: 659.25, d: 0.5 },
-            { f: 659.25, d: 0.25 }, { f: 659.25, d: 0.25 }, { f: 659.25, d: 0.5 },
-            { f: 659.25, d: 0.25 }, { f: 783.99, d: 0.25 }, { f: 523.25, d: 0.35 }, { f: 587.33, d: 0.15 },
-            { f: 659.25, d: 0.8 },
-            { f: 698.46, d: 0.25 }, { f: 698.46, d: 0.25 }, { f: 698.46, d: 0.35 }, { f: 698.46, d: 0.15 },
-            { f: 698.46, d: 0.25 }, { f: 659.25, d: 0.25 }, { f: 659.25, d: 0.25 }, { f: 659.25, d: 0.25 },
-            { f: 659.25, d: 0.25 }, { f: 587.33, d: 0.25 }, { f: 587.33, d: 0.25 }, { f: 659.25, d: 0.25 },
-            { f: 587.33, d: 0.5 }, { f: 783.99, d: 0.5 }
-        ];
-
-        function playNote(freq, duration) {
-            if (isMuted || !audioCtx) return;
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.type = "triangle";
-            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-
-            gain.gain.setValueAtTime(0.001, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.045, audioCtx.currentTime + 0.02);
-            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
-
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start();
-            osc.stop(audioCtx.currentTime + duration);
-        }
-
-        function startChristmasMusic() {
+        function tryPlayAudio() {
             if (isMuted) return;
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            }
-            if (audioCtx.state === "suspended") {
-                audioCtx.resume();
-            }
-            if (musicTimer) return;
-
-            function stepNote() {
-                if (isMuted) return;
-                const item = melody[noteIndex % melody.length];
-                playNote(item.f, item.d);
-                noteIndex++;
-                musicTimer = setTimeout(stepNote, item.d * 1000 + 60);
-            }
-            stepNote();
+            xmasAudio.play().catch(() => {
+                // Browser may require user interaction before autoplay
+            });
         }
 
-        function stopChristmasMusic() {
-            if (musicTimer) {
-                clearTimeout(musicTimer);
-                musicTimer = null;
-            }
-        }
-
-        // Attempt autoplay on load, fallback to first click if browser blocks autoplay
-        window.addEventListener("load", () => {
-            startChristmasMusic();
-        });
+        window.addEventListener("load", tryPlayAudio);
         document.addEventListener("pointerdown", () => {
-            if (!isMuted && !musicTimer) startChristmasMusic();
+            if (!isMuted && xmasAudio.paused) tryPlayAudio();
         }, { once: true });
 
-        const soundBtn = document.getElementById("sound-toggle-btn");
         soundBtn.addEventListener("click", () => {
             isMuted = !isMuted;
             if (isMuted) {
-                stopChristmasMusic();
+                xmasAudio.pause();
                 soundBtn.innerHTML = "🔇 Muted";
             } else {
+                xmasAudio.play().catch(() => {});
                 soundBtn.innerHTML = "🔊 Music";
-                startChristmasMusic();
             }
         });
 
         // App State
-        let allParticipants = [];
+        let usersList = [];
+        let selectedRecords = [];
         let selectedUser = null;
         let currentEventDate = "";
 
@@ -791,14 +741,14 @@
                 : "📅 Gift Exchange Date will be shared by Admin soon!";
         });
 
-        // Real-time Participants Listener
-        const q = query(participantsCol, orderBy("name"));
-        onSnapshot(q, (snapshot) => {
-            allParticipants = snapshot.docs.map(docSnap => ({
+        // Real-time `users` listener
+        const qUsers = query(usersCol, orderBy("name"));
+        onSnapshot(qUsers, (snapshot) => {
+            usersList = snapshot.docs.map(docSnap => ({
                 id: docSnap.id,
                 ...docSnap.data()
             }));
-            dbStatus.innerHTML = `🟢 Connected (${allParticipants.length} members ready)`;
+            dbStatus.innerHTML = `🟢 Connected (${usersList.length} users ready)`;
             renderAdminList();
         }, (error) => {
             console.error("Firestore Error:", error);
@@ -806,33 +756,24 @@
             dbStatus.style.color = "#ff6b6b";
         });
 
-        // Clear all documents in secret_santa_matches collection
-        async function clearMatchesCollection() {
-            const snap = await getDocs(matchesCol);
+        // Real-time `selected` listener
+        onSnapshot(selectedCol, (snapshot) => {
+            selectedRecords = snapshot.docs.map(docSnap => ({
+                id: docSnap.id,
+                ...docSnap.data()
+            }));
+        });
+
+        // Clear all documents in `selected` collection
+        async function clearSelectedCollection() {
+            const snap = await getDocs(selectedCol);
             if (snap.empty) return;
             const batch = writeBatch(db);
             snap.docs.forEach(d => batch.delete(d.ref));
             await batch.commit();
         }
 
-        // Save generated pairs silently in secret_santa_matches collection
-        async function saveMatchesToSeparateCollection(pairs) {
-            await clearMatchesCollection();
-            const batch = writeBatch(db);
-            pairs.forEach(pair => {
-                const newMatchRef = doc(matchesCol);
-                batch.set(newMatchRef, {
-                    giverId: pair.giverId,
-                    giverName: pair.giverName,
-                    receiverId: pair.receiverId,
-                    receiverName: pair.receiverName,
-                    createdAt: new Date().toISOString()
-                });
-            });
-            await batch.commit();
-        }
-
-        // Autocomplete Search
+        // Autocomplete Search from `users`
         nameInput.addEventListener('input', function() {
             const val = this.value.trim().toLowerCase();
             autocompleteList.innerHTML = '';
@@ -844,7 +785,7 @@
                 return;
             }
 
-            const matches = allParticipants.filter(p => p.name.toLowerCase().includes(val));
+            const matches = usersList.filter(u => u.name.toLowerCase().includes(val));
 
             if (matches.length > 0) {
                 autocompleteList.style.display = 'block';
@@ -889,51 +830,61 @@
         continueEndBtn.addEventListener('click', () => showStep('step-end'));
         finishBtn.addEventListener('click', resetToStart);
 
-        // Secret Santa Derangement Algorithm
-        async function ensureMatchesGenerated() {
-            if (allParticipants.length < 2) {
-                alert("Admin must add at least 2 people first!");
-                return false;
+        // Random selection on click -> saves to `selected` collection
+        async function selectRandomReceiverForUser(giver) {
+            // Refresh latest `selected` docs
+            const latestSnap = await getDocs(selectedCol);
+            const currentSelected = latestSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+            // If this user already selected someone, return that receiver
+            const existingForGiver = currentSelected.find(item => item.giverId === giver.id);
+            if (existingForGiver) {
+                return existingForGiver.receiverName;
             }
 
-            const unassigned = allParticipants.some(p => !p.assignedTo);
-            if (!unassigned) return true;
-
-            let receivers = allParticipants.map(p => ({ id: p.id, name: p.name }));
-            let isValid = false;
-
-            while (!isValid) {
-                for (let i = receivers.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [receivers[i], receivers[j]] = [receivers[j], receivers[i]];
-                }
-                isValid = allParticipants.every((giver, idx) => giver.name !== receivers[idx].name);
+            if (usersList.length < 2) {
+                alert("Admin must add at least 2 users first!");
+                return null;
             }
 
-            const pairsToStore = [];
-            const updatePromises = allParticipants.map((giver, idx) => {
-                const rec = receivers[idx];
-                pairsToStore.push({
-                    giverId: giver.id,
-                    giverName: giver.name,
-                    receiverId: rec.id,
-                    receiverName: rec.name
-                });
-                const userRef = doc(db, "secret_santa_participants", giver.id);
-                return updateDoc(userRef, { assignedTo: rec.name });
+            // IDs already picked as a receiver
+            const alreadyTakenReceiverIds = new Set(currentSelected.map(item => item.receiverId));
+
+            // Eligible pool: not self and not already received
+            let pool = usersList.filter(u => u.id !== giver.id && !alreadyTakenReceiverIds.has(u.id));
+
+            // Fallback if last remaining person only has themselves left in pool
+            if (pool.length === 0) {
+                pool = usersList.filter(u => u.id !== giver.id);
+            }
+
+            if (pool.length === 0) return null;
+
+            const randomIdx = Math.floor(Math.random() * pool.length);
+            const chosenReceiver = pool[randomIdx];
+
+            await addDoc(selectedCol, {
+                giverId: giver.id,
+                giverName: giver.name,
+                receiverId: chosenReceiver.id,
+                receiverName: chosenReceiver.name,
+                selectedAt: new Date().toISOString()
             });
 
-            await Promise.all(updatePromises);
-            await saveMatchesToSeparateCollection(pairsToStore);
-            return true;
+            await updateDoc(doc(db, "users", giver.id), { hasChecked: true });
+
+            return chosenReceiver.name;
         }
 
-        // Find Match Flow
+        // Find Button Flow
         findBtn.addEventListener('click', async () => {
+            if (!selectedUser) return;
             findBtn.disabled = true;
-            const ready = await ensureMatchesGenerated();
+
+            const receiverName = await selectRandomReceiverForUser(selectedUser);
             findBtn.disabled = false;
-            if (!ready) return;
+
+            if (!receiverName) return;
 
             showStep('step-3');
 
@@ -949,14 +900,9 @@
                 loadingText.textContent = messages[msgIndex];
             }, 700);
 
-            setTimeout(async () => {
+            setTimeout(() => {
                 clearInterval(textInterval);
-
-                const currentUser = allParticipants.find(p => p.id === selectedUser.id);
-                const userRef = doc(db, "secret_santa_participants", currentUser.id);
-                await updateDoc(userRef, { hasChecked: true });
-
-                matchResult.textContent = currentUser.assignedTo;
+                matchResult.textContent = receiverName;
                 showStep('step-4');
 
                 confetti({
@@ -980,7 +926,6 @@
 
         closeAdminBtn.addEventListener('click', () => showStep('step-1'));
 
-        // Save Event Date
         saveDateBtn.addEventListener('click', async () => {
             const chosenDate = adminEventDateInput.value;
             if (!chosenDate) {
@@ -997,27 +942,19 @@
             saveDateBtn.disabled = false;
         });
 
-        // Add Member
         addMemberBtn.addEventListener('click', async () => {
             const name = newMemberInput.value.trim();
             if (!name) return;
 
-            if (allParticipants.some(p => p.name.toLowerCase() === name.toLowerCase())) {
-                alert("This name is already in the list!");
+            if (usersList.some(u => u.name.toLowerCase() === name.toLowerCase())) {
+                alert("This name is already in `users`!");
                 return;
             }
 
             addMemberBtn.disabled = true;
             try {
-                const resetPromises = allParticipants.map(p => 
-                    updateDoc(doc(db, "secret_santa_participants", p.id), { assignedTo: null, hasChecked: false })
-                );
-                await Promise.all(resetPromises);
-                await clearMatchesCollection();
-
-                await addDoc(participantsCol, {
+                await addDoc(usersCol, {
                     name: name,
-                    assignedTo: null,
                     hasChecked: false
                 });
                 newMemberInput.value = '';
@@ -1027,49 +964,45 @@
             addMemberBtn.disabled = false;
         });
 
-        // Delete Member
         window.deleteMember = async (id) => {
             try {
-                await deleteDoc(doc(db, "secret_santa_participants", id));
-                const remaining = allParticipants.filter(p => p.id !== id);
-                const resetPromises = remaining.map(p => 
-                    updateDoc(doc(db, "secret_santa_participants", p.id), { assignedTo: null, hasChecked: false })
-                );
+                await deleteDoc(doc(db, "users", id));
+                const resetPromises = usersList
+                    .filter(u => u.id !== id)
+                    .map(u => updateDoc(doc(db, "users", u.id), { hasChecked: false }));
                 await Promise.all(resetPromises);
-                await clearMatchesCollection();
+                await clearSelectedCollection();
             } catch (e) {
                 alert("Error deleting: " + e.message);
             }
         };
 
-        // Reset All Matches
         resetMatchesBtn.addEventListener('click', async () => {
-            if (confirm("Reset all matches? Everyone will be able to draw a new name.")) {
-                const resetPromises = allParticipants.map(p => 
-                    updateDoc(doc(db, "secret_santa_participants", p.id), { assignedTo: null, hasChecked: false })
+            if (confirm("Reset all selections? Everyone will draw again.")) {
+                const resetPromises = usersList.map(u =>
+                    updateDoc(doc(db, "users", u.id), { hasChecked: false })
                 );
                 await Promise.all(resetPromises);
-                await clearMatchesCollection();
-                alert("All matches reset successfully!");
+                await clearSelectedCollection();
+                alert("Selections reset!");
             }
         });
 
-        // Admin list intentionally shows only name & Checked/Pending status (no match info)
         function renderAdminList() {
             adminMemberList.innerHTML = '';
-            if (allParticipants.length === 0) {
-                adminMemberList.innerHTML = '<p style="text-align:center; color:#888; font-size:12px; padding:10px;">No members added yet.</p>';
+            if (usersList.length === 0) {
+                adminMemberList.innerHTML = '<p style="text-align:center; color:#888; font-size:12px; padding:10px;">No users added yet.</p>';
                 return;
             }
-            allParticipants.forEach(p => {
+            usersList.forEach(u => {
                 const item = document.createElement('div');
                 item.className = 'admin-list-item';
                 item.innerHTML = `
                     <div>
-                        <span>${p.name}</span>
-                        <span class="badge ${p.hasChecked ? '' : 'pending'}">${p.hasChecked ? 'Checked' : 'Pending'}</span>
+                        <span>${u.name}</span>
+                        <span class="badge ${u.hasChecked ? '' : 'pending'}">${u.hasChecked ? 'Selected' : 'Pending'}</span>
                     </div>
-                    <button class="delete-btn" onclick="deleteMember('${p.id}')">✕</button>
+                    <button class="delete-btn" onclick="deleteMember('${u.id}')">✕</button>
                 `;
                 adminMemberList.appendChild(item);
             });
