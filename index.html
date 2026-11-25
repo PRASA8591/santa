@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🎄 Secret Santa - Christmas Gift Matcher</title>
-    <!-- Canvas Confetti -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Mountains+of+Christmas:wght@700&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     
     <style>
@@ -16,7 +14,7 @@
             --secondary: #2b9348;
             --gold: #ffd166;
             --bg-gradient: radial-gradient(circle at top, #1b3b2b 0%, #2b0912 55%, #0d0408 100%);
-            --glass: rgba(25, 12, 18, 0.65);
+            --glass: rgba(25, 12, 18, 0.68);
             --glass-border: rgba(255, 209, 102, 0.28);
         }
 
@@ -40,7 +38,7 @@
             position: relative;
         }
 
-        /* Twinkling Stars Background */
+        /* Twinkling Stars */
         .stars-container {
             position: fixed;
             top: 0;
@@ -64,7 +62,7 @@
             50% { opacity: 1; transform: scale(1.3); }
         }
 
-        /* Snowfall Effect */
+        /* Snowfall */
         .snowflake {
             position: fixed;
             top: -15px;
@@ -80,7 +78,7 @@
             to { transform: translateY(105vh) rotate(360deg); }
         }
 
-        /* Decorative Christmas Trees at Bottom */
+        /* Bottom Christmas Trees */
         .christmas-scenery {
             position: fixed;
             bottom: -10px;
@@ -95,17 +93,11 @@
             opacity: 0.85;
         }
 
-        .tree-cluster {
-            display: flex;
-            align-items: flex-end;
-            gap: -10px;
-        }
-
         .tree-svg {
             filter: drop-shadow(0 5px 15px rgba(0,0,0,0.7));
         }
 
-        /* String Lights on Top */
+        /* Top String Lights */
         .light-rope {
             position: fixed;
             top: 0;
@@ -133,6 +125,32 @@
             to { opacity: 1; }
         }
 
+        /* Top Controls: Sound & Admin */
+        .top-bar-btn {
+            position: fixed;
+            top: 18px;
+            background: rgba(0, 0, 0, 0.55);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 209, 102, 0.35);
+            color: #ffd166;
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            cursor: pointer;
+            z-index: 30;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .sound-btn { left: 18px; }
+        .admin-btn { right: 18px; }
+
+        .top-bar-btn:hover {
+            background: rgba(255, 209, 102, 0.22);
+        }
+
         /* Main Glass Container */
         .container {
             background: var(--glass);
@@ -142,7 +160,7 @@
             border-radius: 28px;
             padding: 35px 25px;
             width: 100%;
-            max-width: 440px;
+            max-width: 450px;
             text-align: center;
             box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7), inset 0 0 20px rgba(255, 209, 102, 0.08);
             z-index: 10;
@@ -163,8 +181,8 @@
         }
 
         .header-icon {
-            font-size: 56px;
-            margin-bottom: 5px;
+            font-size: 54px;
+            margin-bottom: 4px;
             animation: bounce 2.2s infinite;
         }
 
@@ -186,27 +204,44 @@
 
         p.subtitle {
             font-size: 13px;
-            color: #e0e0e0;
-            margin-bottom: 24px;
+            color: #e2e2e2;
+            margin-bottom: 12px;
         }
 
-        /* Input & Autocomplete */
+        .event-date-pill {
+            display: inline-block;
+            background: rgba(255, 209, 102, 0.14);
+            border: 1px solid rgba(255, 209, 102, 0.4);
+            color: var(--gold);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        /* Inputs */
         .input-group {
             position: relative;
             margin-bottom: 20px;
             text-align: left;
         }
 
-        input[type="text"] {
+        input[type="text"], input[type="date"] {
             width: 100%;
-            padding: 15px 18px;
+            padding: 14px 16px;
             border-radius: 14px;
             border: 1px solid rgba(255, 255, 255, 0.25);
             background: rgba(0, 0, 0, 0.45);
             color: #fff;
-            font-size: 15px;
+            font-size: 14px;
             outline: none;
             transition: 0.3s;
+        }
+
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            cursor: pointer;
         }
 
         input:focus {
@@ -304,7 +339,7 @@
             background: rgba(255, 255, 255, 0.2);
         }
 
-        /* Steps Management */
+        /* Steps */
         .step { display: none; }
         .step.active { display: block; animation: fadeIn 0.4s ease; }
 
@@ -313,7 +348,7 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Gift Box Loader */
+        /* Loader */
         .gift-loader {
             font-size: 80px;
             margin: 18px 0;
@@ -334,9 +369,8 @@
             background: rgba(0, 0, 0, 0.45);
             border: 2px dashed var(--gold);
             border-radius: 20px;
-            padding: 25px 15px;
-            margin: 18px 0;
-            position: relative;
+            padding: 24px 15px;
+            margin: 16px 0;
         }
 
         .result-name {
@@ -347,31 +381,59 @@
             text-shadow: 0 2px 12px rgba(255, 209, 102, 0.5);
         }
 
-        /* Admin Button & List */
-        .admin-btn {
-            position: fixed;
-            top: 18px;
-            right: 18px;
-            background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(255, 209, 102, 0.3);
-            color: #ffd166;
-            padding: 7px 14px;
+        /* End Screen Card */
+        .end-card {
+            background: rgba(27, 67, 50, 0.35);
+            border: 1px solid rgba(116, 198, 157, 0.45);
             border-radius: 20px;
-            font-size: 12px;
-            cursor: pointer;
-            z-index: 30;
-            transition: 0.2s;
+            padding: 24px 18px;
+            margin: 14px 0 18px;
         }
 
-        .admin-btn:hover {
-            background: rgba(255, 209, 102, 0.2);
+        .end-title {
+            font-family: 'Mountains of Christmas', cursive;
+            font-size: 30px;
+            color: var(--gold);
+            margin-bottom: 8px;
+        }
+
+        .end-quote {
+            font-size: 13px;
+            color: #e9ecef;
+            line-height: 1.6;
+            margin-bottom: 12px;
+        }
+
+        .end-date-note {
+            font-size: 12px;
+            color: #95d5b2;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 8px 12px;
+            border-radius: 10px;
+        }
+
+        /* Admin Section */
+        .admin-section-box {
+            background: rgba(0, 0, 0, 0.35);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 14px;
+            padding: 12px;
+            margin-bottom: 14px;
+            text-align: left;
+        }
+
+        .admin-label {
+            font-size: 12px;
+            color: var(--gold);
+            font-weight: 600;
+            display: block;
+            margin-bottom: 6px;
         }
 
         .admin-list {
-            max-height: 210px;
+            max-height: 185px;
             overflow-y: auto;
-            margin: 15px 0;
+            margin: 10px 0 14px;
             text-align: left;
             background: rgba(0, 0, 0, 0.4);
             border-radius: 14px;
@@ -383,7 +445,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 9px 10px;
+            padding: 8px 10px;
             border-bottom: 1px solid rgba(255,255,255,0.08);
             font-size: 13px;
         }
@@ -416,11 +478,7 @@
         .db-status {
             font-size: 11px;
             color: #74c69d;
-            margin-top: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 5px;
+            margin-top: 14px;
         }
 
         @media (max-width: 480px) {
@@ -440,50 +498,48 @@
         <div class="bulb"></div><div class="bulb"></div><div class="bulb"></div>
     </div>
 
-    <!-- Twinkling Stars Container -->
+    <!-- Stars -->
     <div class="stars-container" id="stars-container"></div>
 
-    <!-- Decorative Christmas Trees -->
+    <!-- Christmas Trees -->
     <div class="christmas-scenery">
-        <div class="tree-cluster">
-            <svg class="tree-svg" width="95" height="130" viewBox="0 0 100 140">
-                <rect x="42" y="115" width="16" height="25" fill="#4a2c18"/>
-                <polygon points="50,15 15,60 85,60" fill="#1b4332"/>
-                <polygon points="50,40 10,90 90,90" fill="#2d6a4f"/>
-                <polygon points="50,65 5,120 95,120" fill="#40916c"/>
-                <polygon points="50,5 53,13 61,13 55,18 57,26 50,21 43,26 45,18 39,13 47,13" fill="#ffd166"/>
-                <circle cx="35" cy="50" r="3" fill="#ff4d6d"/>
-                <circle cx="65" cy="75" r="3.5" fill="#ffd166"/>
-                <circle cx="30" cy="105" r="3.5" fill="#4cc9f0"/>
-                <circle cx="70" cy="108" r="3" fill="#ff4d6d"/>
-            </svg>
-        </div>
-        <div class="tree-cluster">
-            <svg class="tree-svg" width="95" height="130" viewBox="0 0 100 140">
-                <rect x="42" y="115" width="16" height="25" fill="#4a2c18"/>
-                <polygon points="50,15 15,60 85,60" fill="#1b4332"/>
-                <polygon points="50,40 10,90 90,90" fill="#2d6a4f"/>
-                <polygon points="50,65 5,120 95,120" fill="#40916c"/>
-                <polygon points="50,5 53,13 61,13 55,18 57,26 50,21 43,26 45,18 39,13 47,13" fill="#ffd166"/>
-                <circle cx="62" cy="48" r="3" fill="#ffd166"/>
-                <circle cx="38" cy="78" r="3.5" fill="#ff4d6d"/>
-                <circle cx="68" cy="105" r="3.5" fill="#4cc9f0"/>
-                <circle cx="28" cy="108" r="3" fill="#ffd166"/>
-            </svg>
-        </div>
+        <svg class="tree-svg" width="95" height="130" viewBox="0 0 100 140">
+            <rect x="42" y="115" width="16" height="25" fill="#4a2c18"/>
+            <polygon points="50,15 15,60 85,60" fill="#1b4332"/>
+            <polygon points="50,40 10,90 90,90" fill="#2d6a4f"/>
+            <polygon points="50,65 5,120 95,120" fill="#40916c"/>
+            <polygon points="50,5 53,13 61,13 55,18 57,26 50,21 43,26 45,18 39,13 47,13" fill="#ffd166"/>
+            <circle cx="35" cy="50" r="3" fill="#ff4d6d"/>
+            <circle cx="65" cy="75" r="3.5" fill="#ffd166"/>
+            <circle cx="30" cy="105" r="3.5" fill="#4cc9f0"/>
+            <circle cx="70" cy="108" r="3" fill="#ff4d6d"/>
+        </svg>
+        <svg class="tree-svg" width="95" height="130" viewBox="0 0 100 140">
+            <rect x="42" y="115" width="16" height="25" fill="#4a2c18"/>
+            <polygon points="50,15 15,60 85,60" fill="#1b4332"/>
+            <polygon points="50,40 10,90 90,90" fill="#2d6a4f"/>
+            <polygon points="50,65 5,120 95,120" fill="#40916c"/>
+            <polygon points="50,5 53,13 61,13 55,18 57,26 50,21 43,26 45,18 39,13 47,13" fill="#ffd166"/>
+            <circle cx="62" cy="48" r="3" fill="#ffd166"/>
+            <circle cx="38" cy="78" r="3.5" fill="#ff4d6d"/>
+            <circle cx="68" cy="105" r="3.5" fill="#4cc9f0"/>
+            <circle cx="28" cy="108" r="3" fill="#ffd166"/>
+        </svg>
     </div>
 
-    <!-- Admin Trigger -->
-    <button class="admin-btn" id="open-admin-btn">⚙️ Admin</button>
+    <!-- Sound & Admin Controls -->
+    <button class="top-bar-btn sound-btn" id="sound-toggle-btn" title="Toggle Christmas Music">🔊 Music</button>
+    <button class="top-bar-btn admin-btn" id="open-admin-btn">⚙️ Admin</button>
 
-    <!-- Main App Card -->
+    <!-- Main Container -->
     <div class="container">
         <span class="top-star">⭐</span>
         <div class="header-icon">🎅</div>
         <h1>Secret Santa</h1>
         <p class="subtitle">✨ Find out who you're gifting this Christmas! ✨</p>
+        <div class="event-date-pill" id="event-date-badge">📅 Event Date: Loading...</div>
 
-        <!-- STEP 1: Search & Select Name -->
+        <!-- STEP 1: Select Name -->
         <div id="step-1" class="step active">
             <div class="input-group">
                 <input type="text" id="name-input" placeholder="🔍 Type your name..." autocomplete="off">
@@ -496,12 +552,12 @@
         <!-- STEP 2: Find Match -->
         <div id="step-2" class="step">
             <p style="margin-bottom: 12px; font-size: 16px;">Merry Christmas, <strong id="selected-user-display" style="color: var(--gold);"></strong>! 🎄</p>
-            <p style="font-size: 13px; color: #ddd; margin-bottom: 24px;">Make sure nobody is looking at your screen before opening your secret gift match!</p>
+            <p style="font-size: 13px; color: #ddd; margin-bottom: 24px;">Make sure nobody is looking at your screen before revealing your Secret Santa match!</p>
             <button id="find-btn" class="btn btn-find">🎁 Find My Match</button>
             <button id="back-btn" class="btn btn-secondary">← Change Name</button>
         </div>
 
-        <!-- STEP 3: Loading Animation -->
+        <!-- STEP 3: Loading -->
         <div id="step-3" class="step">
             <div class="gift-loader">🎁</div>
             <h3 id="loading-text" style="color: var(--gold);">Shuffling Santa's bag...</h3>
@@ -516,22 +572,44 @@
                 <div id="match-result" class="result-name">---</div>
             </div>
             <p style="font-size: 12px; color: #ffccd5; margin-bottom: 14px;">🤫 Shhh! Keep it a secret until gift exchange day!</p>
-            <button id="done-btn" class="btn btn-secondary">Done & Clear Screen</button>
+            <button id="continue-end-btn" class="btn btn-primary">Continue ➔</button>
+        </div>
+
+        <!-- STEP 5: End Screen Message -->
+        <div id="step-end" class="step">
+            <div style="font-size: 46px; margin-bottom: 6px;">🎄✨🎁</div>
+            <div class="end-card">
+                <div class="end-title">Merry Christmas & Happy Holidays!</div>
+                <p class="end-quote">
+                    May this festive season bring joy, laughter, and warm moments to our team. Get a thoughtful little surprise ready and keep the mystery alive! 🎅❤️
+                </p>
+                <div class="end-date-note" id="end-event-date">📅 Gift Exchange Date: Not set yet</div>
+            </div>
+            <button id="finish-btn" class="btn btn-secondary">Back to Start</button>
         </div>
 
         <!-- ADMIN PANEL -->
         <div id="step-admin" class="step">
-            <h3 style="color: var(--gold); margin-bottom: 6px;">⚙️ Santa's Admin Panel</h3>
-            <p style="font-size: 12px; color: #ccc; margin-bottom: 14px;">Manage participants in Firebase Firestore</p>
-            
-            <div class="flex-row" style="margin-bottom: 10px;">
+            <h3 style="color: var(--gold); margin-bottom: 12px;">⚙️ Santa's Admin Panel</h3>
+
+            <!-- Event Date Setter -->
+            <div class="admin-section-box">
+                <label class="admin-label" for="admin-event-date">📅 Set Secret Santa Event Date</label>
+                <div class="flex-row">
+                    <input type="date" id="admin-event-date" style="padding: 9px 12px;">
+                    <button id="save-date-btn" class="btn btn-primary" style="width: auto; padding: 9px 15px; font-size: 12px;">Save</button>
+                </div>
+            </div>
+
+            <!-- Add Member -->
+            <div class="flex-row">
                 <input type="text" id="new-member-name" placeholder="Enter member name..." style="padding: 11px;">
                 <button id="add-member-btn" class="btn btn-primary" style="width: auto; padding: 11px 18px;">Add</button>
             </div>
 
             <div class="admin-list" id="admin-member-list"></div>
 
-            <button id="reset-matches-btn" class="btn btn-secondary" style="background: #9b001c; margin-top: 5px;">🔄 Reset All Matches</button>
+            <button id="reset-matches-btn" class="btn btn-secondary" style="background: #9b001c; margin-top: 2px;">🔄 Reset All Matches</button>
             <button id="close-admin-btn" class="btn btn-secondary">← Back to App</button>
         </div>
     </div>
@@ -545,13 +623,15 @@
             addDoc, 
             deleteDoc, 
             doc, 
+            setDoc,
             updateDoc, 
             onSnapshot, 
             query, 
-            orderBy 
+            orderBy,
+            getDocs,
+            writeBatch
         } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-firestore.js";
 
-        // Your Firebase Configuration
         const firebaseConfig = {
             apiKey: "AIzaSyAtSdOKaV6s-5ukKBt3DeQOcAsLAfpXUFA",
             authDomain: "fir-santa-54e5c.firebaseapp.com",
@@ -561,14 +641,100 @@
             appId: "1:274315972578:web:5e8b4fc62cc011bfe1f3bb"
         };
 
-        // Initialize Firebase & Firestore
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+
+        // Firestore Collections
         const participantsCol = collection(db, "secret_santa_participants");
+        const matchesCol = collection(db, "secret_santa_matches"); // Separate table/collection for pairs
+        const eventSettingsDocRef = doc(db, "secret_santa_settings", "event_config");
+
+        // Festive Web Audio Melody ("Jingle Bells" gentle chime loop)
+        let audioCtx = null;
+        let isMuted = false;
+        let musicTimer = null;
+        let noteIndex = 0;
+
+        // Frequencies (Hz) for Jingle Bells opening phrase
+        const melody = [
+            { f: 659.25, d: 0.25 }, { f: 659.25, d: 0.25 }, { f: 659.25, d: 0.5 },
+            { f: 659.25, d: 0.25 }, { f: 659.25, d: 0.25 }, { f: 659.25, d: 0.5 },
+            { f: 659.25, d: 0.25 }, { f: 783.99, d: 0.25 }, { f: 523.25, d: 0.35 }, { f: 587.33, d: 0.15 },
+            { f: 659.25, d: 0.8 },
+            { f: 698.46, d: 0.25 }, { f: 698.46, d: 0.25 }, { f: 698.46, d: 0.35 }, { f: 698.46, d: 0.15 },
+            { f: 698.46, d: 0.25 }, { f: 659.25, d: 0.25 }, { f: 659.25, d: 0.25 }, { f: 659.25, d: 0.25 },
+            { f: 659.25, d: 0.25 }, { f: 587.33, d: 0.25 }, { f: 587.33, d: 0.25 }, { f: 659.25, d: 0.25 },
+            { f: 587.33, d: 0.5 }, { f: 783.99, d: 0.5 }
+        ];
+
+        function playNote(freq, duration) {
+            if (isMuted || !audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = "triangle";
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+
+            gain.gain.setValueAtTime(0.001, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.045, audioCtx.currentTime + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        function startChristmasMusic() {
+            if (isMuted) return;
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === "suspended") {
+                audioCtx.resume();
+            }
+            if (musicTimer) return;
+
+            function stepNote() {
+                if (isMuted) return;
+                const item = melody[noteIndex % melody.length];
+                playNote(item.f, item.d);
+                noteIndex++;
+                musicTimer = setTimeout(stepNote, item.d * 1000 + 60);
+            }
+            stepNote();
+        }
+
+        function stopChristmasMusic() {
+            if (musicTimer) {
+                clearTimeout(musicTimer);
+                musicTimer = null;
+            }
+        }
+
+        // Attempt autoplay on load, fallback to first click if browser blocks autoplay
+        window.addEventListener("load", () => {
+            startChristmasMusic();
+        });
+        document.addEventListener("pointerdown", () => {
+            if (!isMuted && !musicTimer) startChristmasMusic();
+        }, { once: true });
+
+        const soundBtn = document.getElementById("sound-toggle-btn");
+        soundBtn.addEventListener("click", () => {
+            isMuted = !isMuted;
+            if (isMuted) {
+                stopChristmasMusic();
+                soundBtn.innerHTML = "🔇 Muted";
+            } else {
+                soundBtn.innerHTML = "🔊 Music";
+                startChristmasMusic();
+            }
+        });
 
         // App State
         let allParticipants = [];
         let selectedUser = null;
+        let currentEventDate = "";
 
         // DOM Elements
         const nameInput = document.getElementById('name-input');
@@ -576,11 +742,14 @@
         const nextBtn = document.getElementById('next-btn');
         const findBtn = document.getElementById('find-btn');
         const backBtn = document.getElementById('back-btn');
-        const doneBtn = document.getElementById('done-btn');
+        const continueEndBtn = document.getElementById('continue-end-btn');
+        const finishBtn = document.getElementById('finish-btn');
         const selectedUserDisplay = document.getElementById('selected-user-display');
         const matchResult = document.getElementById('match-result');
         const loadingText = document.getElementById('loading-text');
         const dbStatus = document.getElementById('db-status');
+        const eventDateBadge = document.getElementById('event-date-badge');
+        const endEventDate = document.getElementById('end-event-date');
 
         // Admin Elements
         const openAdminBtn = document.getElementById('open-admin-btn');
@@ -589,14 +758,40 @@
         const newMemberInput = document.getElementById('new-member-name');
         const adminMemberList = document.getElementById('admin-member-list');
         const resetMatchesBtn = document.getElementById('reset-matches-btn');
+        const adminEventDateInput = document.getElementById('admin-event-date');
+        const saveDateBtn = document.getElementById('save-date-btn');
 
-        // Switch Steps
         function showStep(stepId) {
             document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
             document.getElementById(stepId).classList.add('active');
         }
 
-        // Real-time Listener from Firestore
+        function formatEventDate(dateStr) {
+            if (!dateStr) return "📅 Event Date: To be announced";
+            const d = new Date(dateStr + "T00:00:00");
+            if (isNaN(d.getTime())) return `📅 Event Date: ${dateStr}`;
+            return "📅 Gift Day: " + d.toLocaleDateString("en-GB", {
+                day: "numeric",
+                month: "short",
+                year: "numeric"
+            });
+        }
+
+        // Listen to Event Settings
+        onSnapshot(eventSettingsDocRef, (docSnap) => {
+            if (docSnap.exists() && docSnap.data().eventDate) {
+                currentEventDate = docSnap.data().eventDate;
+                adminEventDateInput.value = currentEventDate;
+            } else {
+                currentEventDate = "";
+            }
+            eventDateBadge.textContent = formatEventDate(currentEventDate);
+            endEventDate.textContent = currentEventDate
+                ? `${formatEventDate(currentEventDate)} — Don't forget your gift! 🎁`
+                : "📅 Gift Exchange Date will be shared by Admin soon!";
+        });
+
+        // Real-time Participants Listener
         const q = query(participantsCol, orderBy("name"));
         onSnapshot(q, (snapshot) => {
             allParticipants = snapshot.docs.map(docSnap => ({
@@ -611,7 +806,33 @@
             dbStatus.style.color = "#ff6b6b";
         });
 
-        // Autocomplete Search Logic
+        // Clear all documents in secret_santa_matches collection
+        async function clearMatchesCollection() {
+            const snap = await getDocs(matchesCol);
+            if (snap.empty) return;
+            const batch = writeBatch(db);
+            snap.docs.forEach(d => batch.delete(d.ref));
+            await batch.commit();
+        }
+
+        // Save generated pairs silently in secret_santa_matches collection
+        async function saveMatchesToSeparateCollection(pairs) {
+            await clearMatchesCollection();
+            const batch = writeBatch(db);
+            pairs.forEach(pair => {
+                const newMatchRef = doc(matchesCol);
+                batch.set(newMatchRef, {
+                    giverId: pair.giverId,
+                    giverName: pair.giverName,
+                    receiverId: pair.receiverId,
+                    receiverName: pair.receiverName,
+                    createdAt: new Date().toISOString()
+                });
+            });
+            await batch.commit();
+        }
+
+        // Autocomplete Search
         nameInput.addEventListener('input', function() {
             const val = this.value.trim().toLowerCase();
             autocompleteList.innerHTML = '';
@@ -650,7 +871,6 @@
             }
         });
 
-        // Navigation Buttons
         nextBtn.addEventListener('click', () => {
             if (!selectedUser) return;
             selectedUserDisplay.textContent = selectedUser.name;
@@ -659,26 +879,27 @@
 
         backBtn.addEventListener('click', () => showStep('step-1'));
 
-        doneBtn.addEventListener('click', () => {
+        function resetToStart() {
             nameInput.value = '';
             selectedUser = null;
             nextBtn.disabled = true;
             showStep('step-1');
-        });
+        }
 
-        // Secret Santa Derangement Algorithm (Saves to Firestore)
+        continueEndBtn.addEventListener('click', () => showStep('step-end'));
+        finishBtn.addEventListener('click', resetToStart);
+
+        // Secret Santa Derangement Algorithm
         async function ensureMatchesGenerated() {
             if (allParticipants.length < 2) {
                 alert("Admin must add at least 2 people first!");
                 return false;
             }
 
-            // Check if matches are already generated
             const unassigned = allParticipants.some(p => !p.assignedTo);
             if (!unassigned) return true;
 
-            // Shuffle until NO ONE gets their own name
-            let receivers = allParticipants.map(p => p.name);
+            let receivers = allParticipants.map(p => ({ id: p.id, name: p.name }));
             let isValid = false;
 
             while (!isValid) {
@@ -686,20 +907,28 @@
                     const j = Math.floor(Math.random() * (i + 1));
                     [receivers[i], receivers[j]] = [receivers[j], receivers[i]];
                 }
-                isValid = allParticipants.every((giver, idx) => giver.name !== receivers[idx]);
+                isValid = allParticipants.every((giver, idx) => giver.name !== receivers[idx].name);
             }
 
-            // Save all assignments to Firestore
+            const pairsToStore = [];
             const updatePromises = allParticipants.map((giver, idx) => {
+                const rec = receivers[idx];
+                pairsToStore.push({
+                    giverId: giver.id,
+                    giverName: giver.name,
+                    receiverId: rec.id,
+                    receiverName: rec.name
+                });
                 const userRef = doc(db, "secret_santa_participants", giver.id);
-                return updateDoc(userRef, { assignedTo: receivers[idx] });
+                return updateDoc(userRef, { assignedTo: rec.name });
             });
 
             await Promise.all(updatePromises);
+            await saveMatchesToSeparateCollection(pairsToStore);
             return true;
         }
 
-        // Find Button & Animation
+        // Find Match Flow
         findBtn.addEventListener('click', async () => {
             findBtn.disabled = true;
             const ready = await ensureMatchesGenerated();
@@ -723,10 +952,7 @@
             setTimeout(async () => {
                 clearInterval(textInterval);
 
-                // Get fresh data from real-time array
                 const currentUser = allParticipants.find(p => p.id === selectedUser.id);
-                
-                // Mark as checked in Firestore
                 const userRef = doc(db, "secret_santa_participants", currentUser.id);
                 await updateDoc(userRef, { hasChecked: true });
 
@@ -741,10 +967,11 @@
             }, 2800);
         });
 
-        // Admin Panel Controls
+        // Admin Panel
         openAdminBtn.addEventListener('click', () => {
             const pass = prompt("Enter Admin PIN (Default: 1234):");
             if (pass === "1234") {
+                adminEventDateInput.value = currentEventDate;
                 showStep('step-admin');
             } else if (pass !== null) {
                 alert("Incorrect PIN!");
@@ -753,12 +980,28 @@
 
         closeAdminBtn.addEventListener('click', () => showStep('step-1'));
 
-        // Add Member to Firestore
+        // Save Event Date
+        saveDateBtn.addEventListener('click', async () => {
+            const chosenDate = adminEventDateInput.value;
+            if (!chosenDate) {
+                alert("Please select a date first!");
+                return;
+            }
+            saveDateBtn.disabled = true;
+            try {
+                await setDoc(eventSettingsDocRef, { eventDate: chosenDate }, { merge: true });
+                alert("Event date saved!");
+            } catch (e) {
+                alert("Error saving date: " + e.message);
+            }
+            saveDateBtn.disabled = false;
+        });
+
+        // Add Member
         addMemberBtn.addEventListener('click', async () => {
             const name = newMemberInput.value.trim();
             if (!name) return;
 
-            // Check duplicate
             if (allParticipants.some(p => p.name.toLowerCase() === name.toLowerCase())) {
                 alert("This name is already in the list!");
                 return;
@@ -766,11 +1009,11 @@
 
             addMemberBtn.disabled = true;
             try {
-                // Reset existing matches if a new person joins
                 const resetPromises = allParticipants.map(p => 
                     updateDoc(doc(db, "secret_santa_participants", p.id), { assignedTo: null, hasChecked: false })
                 );
                 await Promise.all(resetPromises);
+                await clearMatchesCollection();
 
                 await addDoc(participantsCol, {
                     name: name,
@@ -784,16 +1027,16 @@
             addMemberBtn.disabled = false;
         });
 
-        // Delete Member from Firestore
+        // Delete Member
         window.deleteMember = async (id) => {
             try {
                 await deleteDoc(doc(db, "secret_santa_participants", id));
-                // Reset remaining matches so nobody gets matched to deleted person
                 const remaining = allParticipants.filter(p => p.id !== id);
                 const resetPromises = remaining.map(p => 
                     updateDoc(doc(db, "secret_santa_participants", p.id), { assignedTo: null, hasChecked: false })
                 );
                 await Promise.all(resetPromises);
+                await clearMatchesCollection();
             } catch (e) {
                 alert("Error deleting: " + e.message);
             }
@@ -806,10 +1049,12 @@
                     updateDoc(doc(db, "secret_santa_participants", p.id), { assignedTo: null, hasChecked: false })
                 );
                 await Promise.all(resetPromises);
+                await clearMatchesCollection();
                 alert("All matches reset successfully!");
             }
         });
 
+        // Admin list intentionally shows only name & Checked/Pending status (no match info)
         function renderAdminList() {
             adminMemberList.innerHTML = '';
             if (allParticipants.length === 0) {
@@ -830,7 +1075,6 @@
             });
         }
 
-        // Generate Twinkling Stars
         function createStars() {
             const container = document.getElementById('stars-container');
             for (let i = 0; i < 45; i++) {
@@ -846,7 +1090,6 @@
             }
         }
 
-        // Generate Falling Snowflakes
         function createSnowflakes() {
             const snowChars = ['❄', '❅', '❆'];
             for (let i = 0; i < 25; i++) {
