@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎄 Secret Santa - Christmas Gift Matcher</title>
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Mountains+of+Christmas:wght@700&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #d90429;
+            --primary-glow: rgba(217, 4, 41, 0.6);
+            --secondary: #2b9348;
+            --gold: #ffd166;
+            --bg-gradient: radial-gradient(circle at top, #1b3b2b 0%, #2b0912 55%, #0d0408 100%);
+            --glass: rgba(25, 12, 18, 0.65);
+            --glass-border: rgba(255, 209, 102, 0.28);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Twinkling Stars Background */
+        .stars-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 60%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .star {
+            position: absolute;
+            background: #fff;
+            border-radius: 50%;
+            box-shadow: 0 0 8px #ffd166, 0 0 15px #fff;
+            animation: twinkle var(--duration) infinite ease-in-out;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.2; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.3); }
+        }
+
+        /* Snowfall Effect */
+        .snowflake {
+            position: fixed;
+            top: -15px;
+            color: #fff;
+            user-select: none;
+            pointer-events: none;
+            z-index: 1;
+            animation: fall linear infinite;
+            opacity: 0.75;
+        }
+
+        @keyframes fall {
+            to { transform: translateY(105vh) rotate(360deg); }
+        }
+
+        /* Decorative Christmas Trees at Bottom */
+        .christmas-scenery {
+            position: fixed;
+            bottom: -10px;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            padding: 0 15px;
+            pointer-events: none;
+            z-index: 2;
+            opacity: 0.85;
+        }
+
+        .tree-cluster {
+            display: flex;
+            align-items: flex-end;
+            gap: -10px;
+        }
+
+        .tree-svg {
+            filter: drop-shadow(0 5px 15px rgba(0,0,0,0.7));
+        }
+
+        /* String Lights on Top */
+        .light-rope {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-around;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        .bulb {
+            width: 12px;
+            height: 18px;
+            border-radius: 50%;
+            margin-top: -4px;
+            animation: glow 1.5s infinite alternate;
+        }
+        .bulb:nth-child(odd) { background: #ff4d6d; box-shadow: 0 5px 15px #ff4d6d; }
+        .bulb:nth-child(even) { background: #ffd166; box-shadow: 0 5px 15px #ffd166; animation-delay: 0.7s; }
+        .bulb:nth-child(3n) { background: #52b788; box-shadow: 0 5px 15px #52b788; animation-delay: 1.2s; }
+
+        @keyframes glow {
+            from { opacity: 0.4; }
+            to { opacity: 1; }
+        }
+
+        /* Main Glass Container */
+        .container {
+            background: var(--glass);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            border: 1.5px solid var(--glass-border);
+            border-radius: 28px;
+            padding: 35px 25px;
+            width: 100%;
+            max-width: 440px;
+            text-align: center;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7), inset 0 0 20px rgba(255, 209, 102, 0.08);
+            z-index: 10;
+            position: relative;
+        }
+
+        .top-star {
+            font-size: 28px;
+            display: block;
+            margin-bottom: -8px;
+            animation: spinStar 6s linear infinite;
+            filter: drop-shadow(0 0 10px #ffd166);
+        }
+
+        @keyframes spinStar {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            50% { transform: scale(1.2) rotate(15deg); }
+        }
+
+        .header-icon {
+            font-size: 56px;
+            margin-bottom: 5px;
+            animation: bounce 2.2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        h1 {
+            font-family: 'Mountains of Christmas', cursive;
+            font-size: 38px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+            background: linear-gradient(to right, #fff, var(--gold), #ff8fa3);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p.subtitle {
+            font-size: 13px;
+            color: #e0e0e0;
+            margin-bottom: 24px;
+        }
+
+        /* Input & Autocomplete */
+        .input-group {
+            position: relative;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 15px 18px;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            background: rgba(0, 0, 0, 0.45);
+            color: #fff;
+            font-size: 15px;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        input:focus {
+            border-color: var(--gold);
+            box-shadow: 0 0 15px rgba(255, 209, 102, 0.35);
+        }
+
+        .autocomplete-list {
+            position: absolute;
+            top: 106%;
+            left: 0;
+            right: 0;
+            background: #1f0a10;
+            border: 1px solid var(--gold);
+            border-radius: 14px;
+            max-height: 190px;
+            overflow-y: auto;
+            z-index: 99;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.8);
+            display: none;
+        }
+
+        .autocomplete-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: 0.2s;
+        }
+
+        .autocomplete-item:hover {
+            background: var(--primary);
+        }
+
+        /* Buttons */
+        .btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, var(--primary), #ff4d6d);
+            color: white;
+            box-shadow: 0 8px 20px var(--primary-glow);
+        }
+
+        .btn-primary:disabled {
+            background: #4a4a4a;
+            box-shadow: none;
+            cursor: not-allowed;
+            opacity: 0.55;
+        }
+
+        .btn-primary:not(:disabled):hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 25px rgba(217, 4, 41, 0.8);
+        }
+
+        .btn-find {
+            background: linear-gradient(45deg, #1b4332, #40916c);
+            border: 1px solid #74c69d;
+            color: white;
+            font-size: 17px;
+            padding: 17px;
+            box-shadow: 0 8px 25px rgba(64, 145, 108, 0.5);
+            animation: pulse 1.6s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+            100% { transform: scale(1); }
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.12);
+            color: #fff;
+            margin-top: 12px;
+            font-size: 13px;
+            padding: 11px;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Steps Management */
+        .step { display: none; }
+        .step.active { display: block; animation: fadeIn 0.4s ease; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Gift Box Loader */
+        .gift-loader {
+            font-size: 80px;
+            margin: 18px 0;
+            display: inline-block;
+            animation: shake 0.45s infinite;
+        }
+
+        @keyframes shake {
+            0% { transform: rotate(0deg) scale(1); }
+            25% { transform: rotate(14deg) scale(1.12); }
+            50% { transform: rotate(0deg) scale(1); }
+            75% { transform: rotate(-14deg) scale(1.12); }
+            100% { transform: rotate(0deg) scale(1); }
+        }
+
+        /* Result Box */
+        .result-box {
+            background: rgba(0, 0, 0, 0.45);
+            border: 2px dashed var(--gold);
+            border-radius: 20px;
+            padding: 25px 15px;
+            margin: 18px 0;
+            position: relative;
+        }
+
+        .result-name {
+            font-size: 26px;
+            font-weight: 700;
+            color: var(--gold);
+            margin-top: 6px;
+            text-shadow: 0 2px 12px rgba(255, 209, 102, 0.5);
+        }
+
+        /* Admin Button & List */
+        .admin-btn {
+            position: fixed;
+            top: 18px;
+            right: 18px;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 209, 102, 0.3);
+            color: #ffd166;
+            padding: 7px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            cursor: pointer;
+            z-index: 30;
+            transition: 0.2s;
+        }
+
+        .admin-btn:hover {
+            background: rgba(255, 209, 102, 0.2);
+        }
+
+        .admin-list {
+            max-height: 210px;
+            overflow-y: auto;
+            margin: 15px 0;
+            text-align: left;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 14px;
+            padding: 8px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .admin-list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 9px 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            font-size: 13px;
+        }
+
+        .badge {
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            background: #2b9348;
+            margin-left: 6px;
+        }
+
+        .badge.pending { background: #555; }
+
+        .delete-btn {
+            background: #d90429;
+            border: none;
+            color: white;
+            padding: 4px 9px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .flex-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .db-status {
+            font-size: 11px;
+            color: #74c69d;
+            margin-top: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        @media (max-width: 480px) {
+            .container { padding: 28px 18px; }
+            h1 { font-size: 32px; }
+            .tree-svg { width: 70px; height: 95px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Top Christmas Lights -->
+    <div class="light-rope">
+        <div class="bulb"></div><div class="bulb"></div><div class="bulb"></div>
+        <div class="bulb"></div><div class="bulb"></div><div class="bulb"></div>
+        <div class="bulb"></div><div class="bulb"></div><div class="bulb"></div>
+        <div class="bulb"></div><div class="bulb"></div><div class="bulb"></div>
+    </div>
+
+    <!-- Twinkling Stars Container -->
+    <div class="stars-container" id="stars-container"></div>
+
+    <!-- Decorative Christmas Trees -->
+    <div class="christmas-scenery">
+        <div class="tree-cluster">
+            <svg class="tree-svg" width="95" height="130" viewBox="0 0 100 140">
+                <rect x="42" y="115" width="16" height="25" fill="#4a2c18"/>
+                <polygon points="50,15 15,60 85,60" fill="#1b4332"/>
+                <polygon points="50,40 10,90 90,90" fill="#2d6a4f"/>
+                <polygon points="50,65 5,120 95,120" fill="#40916c"/>
+                <polygon points="50,5 53,13 61,13 55,18 57,26 50,21 43,26 45,18 39,13 47,13" fill="#ffd166"/>
+                <circle cx="35" cy="50" r="3" fill="#ff4d6d"/>
+                <circle cx="65" cy="75" r="3.5" fill="#ffd166"/>
+                <circle cx="30" cy="105" r="3.5" fill="#4cc9f0"/>
+                <circle cx="70" cy="108" r="3" fill="#ff4d6d"/>
+            </svg>
+        </div>
+        <div class="tree-cluster">
+            <svg class="tree-svg" width="95" height="130" viewBox="0 0 100 140">
+                <rect x="42" y="115" width="16" height="25" fill="#4a2c18"/>
+                <polygon points="50,15 15,60 85,60" fill="#1b4332"/>
+                <polygon points="50,40 10,90 90,90" fill="#2d6a4f"/>
+                <polygon points="50,65 5,120 95,120" fill="#40916c"/>
+                <polygon points="50,5 53,13 61,13 55,18 57,26 50,21 43,26 45,18 39,13 47,13" fill="#ffd166"/>
+                <circle cx="62" cy="48" r="3" fill="#ffd166"/>
+                <circle cx="38" cy="78" r="3.5" fill="#ff4d6d"/>
+                <circle cx="68" cy="105" r="3.5" fill="#4cc9f0"/>
+                <circle cx="28" cy="108" r="3" fill="#ffd166"/>
+            </svg>
+        </div>
+    </div>
+
+    <!-- Admin Trigger -->
+    <button class="admin-btn" id="open-admin-btn">⚙️ Admin</button>
+
+    <!-- Main App Card -->
+    <div class="container">
+        <span class="top-star">⭐</span>
+        <div class="header-icon">🎅</div>
+        <h1>Secret Santa</h1>
+        <p class="subtitle">✨ Find out who you're gifting this Christmas! ✨</p>
+
+        <!-- STEP 1: Search & Select Name -->
+        <div id="step-1" class="step active">
+            <div class="input-group">
+                <input type="text" id="name-input" placeholder="🔍 Type your name..." autocomplete="off">
+                <div id="autocomplete-list" class="autocomplete-list"></div>
+            </div>
+            <button id="next-btn" class="btn btn-primary" disabled>Next ➔</button>
+            <div class="db-status" id="db-status">⏳ Connecting to Santa's Cloud...</div>
+        </div>
+
+        <!-- STEP 2: Find Match -->
+        <div id="step-2" class="step">
+            <p style="margin-bottom: 12px; font-size: 16px;">Merry Christmas, <strong id="selected-user-display" style="color: var(--gold);"></strong>! 🎄</p>
+            <p style="font-size: 13px; color: #ddd; margin-bottom: 24px;">Make sure nobody is looking at your screen before opening your secret gift match!</p>
+            <button id="find-btn" class="btn btn-find">🎁 Find My Match</button>
+            <button id="back-btn" class="btn btn-secondary">← Change Name</button>
+        </div>
+
+        <!-- STEP 3: Loading Animation -->
+        <div id="step-3" class="step">
+            <div class="gift-loader">🎁</div>
+            <h3 id="loading-text" style="color: var(--gold);">Shuffling Santa's bag...</h3>
+            <p style="font-size: 12px; color: #ccc; margin-top: 8px;">Checking the North Pole list ✨</p>
+        </div>
+
+        <!-- STEP 4: Result Reveal -->
+        <div id="step-4" class="step">
+            <p style="font-size: 14px; color: #eee;">You are the Secret Santa for:</p>
+            <div class="result-box">
+                <span style="font-size: 32px;">🎄🎁🎄</span>
+                <div id="match-result" class="result-name">---</div>
+            </div>
+            <p style="font-size: 12px; color: #ffccd5; margin-bottom: 14px;">🤫 Shhh! Keep it a secret until gift exchange day!</p>
+            <button id="done-btn" class="btn btn-secondary">Done & Clear Screen</button>
+        </div>
+
+        <!-- ADMIN PANEL -->
+        <div id="step-admin" class="step">
+            <h3 style="color: var(--gold); margin-bottom: 6px;">⚙️ Santa's Admin Panel</h3>
+            <p style="font-size: 12px; color: #ccc; margin-bottom: 14px;">Manage participants in Firebase Firestore</p>
+            
+            <div class="flex-row" style="margin-bottom: 10px;">
+                <input type="text" id="new-member-name" placeholder="Enter member name..." style="padding: 11px;">
+                <button id="add-member-btn" class="btn btn-primary" style="width: auto; padding: 11px 18px;">Add</button>
+            </div>
+
+            <div class="admin-list" id="admin-member-list"></div>
+
+            <button id="reset-matches-btn" class="btn btn-secondary" style="background: #9b001c; margin-top: 5px;">🔄 Reset All Matches</button>
+            <button id="close-admin-btn" class="btn btn-secondary">← Back to App</button>
+        </div>
+    </div>
+
+    <!-- Firebase SDK v13.4.0 -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-app.js";
+        import { 
+            getFirestore, 
+            collection, 
+            addDoc, 
+            deleteDoc, 
+            doc, 
+            updateDoc, 
+            onSnapshot, 
+            query, 
+            orderBy 
+        } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-firestore.js";
+
+        // Your Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAtSdOKaV6s-5ukKBt3DeQOcAsLAfpXUFA",
+            authDomain: "fir-santa-54e5c.firebaseapp.com",
+            projectId: "fir-santa-54e5c",
+            storageBucket: "fir-santa-54e5c.firebasestorage.app",
+            messagingSenderId: "274315972578",
+            appId: "1:274315972578:web:5e8b4fc62cc011bfe1f3bb"
+        };
+
+        // Initialize Firebase & Firestore
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const participantsCol = collection(db, "secret_santa_participants");
+
+        // App State
+        let allParticipants = [];
+        let selectedUser = null;
+
+        // DOM Elements
+        const nameInput = document.getElementById('name-input');
+        const autocompleteList = document.getElementById('autocomplete-list');
+        const nextBtn = document.getElementById('next-btn');
+        const findBtn = document.getElementById('find-btn');
+        const backBtn = document.getElementById('back-btn');
+        const doneBtn = document.getElementById('done-btn');
+        const selectedUserDisplay = document.getElementById('selected-user-display');
+        const matchResult = document.getElementById('match-result');
+        const loadingText = document.getElementById('loading-text');
+        const dbStatus = document.getElementById('db-status');
+
+        // Admin Elements
+        const openAdminBtn = document.getElementById('open-admin-btn');
+        const closeAdminBtn = document.getElementById('close-admin-btn');
+        const addMemberBtn = document.getElementById('add-member-btn');
+        const newMemberInput = document.getElementById('new-member-name');
+        const adminMemberList = document.getElementById('admin-member-list');
+        const resetMatchesBtn = document.getElementById('reset-matches-btn');
+
+        // Switch Steps
+        function showStep(stepId) {
+            document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
+            document.getElementById(stepId).classList.add('active');
+        }
+
+        // Real-time Listener from Firestore
+        const q = query(participantsCol, orderBy("name"));
+        onSnapshot(q, (snapshot) => {
+            allParticipants = snapshot.docs.map(docSnap => ({
+                id: docSnap.id,
+                ...docSnap.data()
+            }));
+            dbStatus.innerHTML = `🟢 Connected (${allParticipants.length} members ready)`;
+            renderAdminList();
+        }, (error) => {
+            console.error("Firestore Error:", error);
+            dbStatus.innerHTML = `🔴 Connection Error - Check Firestore Rules`;
+            dbStatus.style.color = "#ff6b6b";
+        });
+
+        // Autocomplete Search Logic
+        nameInput.addEventListener('input', function() {
+            const val = this.value.trim().toLowerCase();
+            autocompleteList.innerHTML = '';
+            selectedUser = null;
+            nextBtn.disabled = true;
+
+            if (!val) {
+                autocompleteList.style.display = 'none';
+                return;
+            }
+
+            const matches = allParticipants.filter(p => p.name.toLowerCase().includes(val));
+
+            if (matches.length > 0) {
+                autocompleteList.style.display = 'block';
+                matches.forEach(person => {
+                    const div = document.createElement('div');
+                    div.className = 'autocomplete-item';
+                    div.innerHTML = `<span>🎄</span> <span>${person.name}</span>`;
+                    div.addEventListener('click', () => {
+                        nameInput.value = person.name;
+                        selectedUser = person;
+                        autocompleteList.style.display = 'none';
+                        nextBtn.disabled = false;
+                    });
+                    autocompleteList.appendChild(div);
+                });
+            } else {
+                autocompleteList.style.display = 'none';
+            }
+        });
+
+        document.addEventListener('click', (e) => {
+            if (e.target !== nameInput) {
+                autocompleteList.style.display = 'none';
+            }
+        });
+
+        // Navigation Buttons
+        nextBtn.addEventListener('click', () => {
+            if (!selectedUser) return;
+            selectedUserDisplay.textContent = selectedUser.name;
+            showStep('step-2');
+        });
+
+        backBtn.addEventListener('click', () => showStep('step-1'));
+
+        doneBtn.addEventListener('click', () => {
+            nameInput.value = '';
+            selectedUser = null;
+            nextBtn.disabled = true;
+            showStep('step-1');
+        });
+
+        // Secret Santa Derangement Algorithm (Saves to Firestore)
+        async function ensureMatchesGenerated() {
+            if (allParticipants.length < 2) {
+                alert("Admin must add at least 2 people first!");
+                return false;
+            }
+
+            // Check if matches are already generated
+            const unassigned = allParticipants.some(p => !p.assignedTo);
+            if (!unassigned) return true;
+
+            // Shuffle until NO ONE gets their own name
+            let receivers = allParticipants.map(p => p.name);
+            let isValid = false;
+
+            while (!isValid) {
+                for (let i = receivers.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [receivers[i], receivers[j]] = [receivers[j], receivers[i]];
+                }
+                isValid = allParticipants.every((giver, idx) => giver.name !== receivers[idx]);
+            }
+
+            // Save all assignments to Firestore
+            const updatePromises = allParticipants.map((giver, idx) => {
+                const userRef = doc(db, "secret_santa_participants", giver.id);
+                return updateDoc(userRef, { assignedTo: receivers[idx] });
+            });
+
+            await Promise.all(updatePromises);
+            return true;
+        }
+
+        // Find Button & Animation
+        findBtn.addEventListener('click', async () => {
+            findBtn.disabled = true;
+            const ready = await ensureMatchesGenerated();
+            findBtn.disabled = false;
+            if (!ready) return;
+
+            showStep('step-3');
+
+            const messages = [
+                "Shuffling Santa's bag...",
+                "Checking the nice list...",
+                "Wrapping your secret match...",
+                "Almost ready..."
+            ];
+            let msgIndex = 0;
+            const textInterval = setInterval(() => {
+                msgIndex = (msgIndex + 1) % messages.length;
+                loadingText.textContent = messages[msgIndex];
+            }, 700);
+
+            setTimeout(async () => {
+                clearInterval(textInterval);
+
+                // Get fresh data from real-time array
+                const currentUser = allParticipants.find(p => p.id === selectedUser.id);
+                
+                // Mark as checked in Firestore
+                const userRef = doc(db, "secret_santa_participants", currentUser.id);
+                await updateDoc(userRef, { hasChecked: true });
+
+                matchResult.textContent = currentUser.assignedTo;
+                showStep('step-4');
+
+                confetti({
+                    particleCount: 110,
+                    spread: 75,
+                    origin: { y: 0.6 }
+                });
+            }, 2800);
+        });
+
+        // Admin Panel Controls
+        openAdminBtn.addEventListener('click', () => {
+            const pass = prompt("Enter Admin PIN (Default: 1234):");
+            if (pass === "1234") {
+                showStep('step-admin');
+            } else if (pass !== null) {
+                alert("Incorrect PIN!");
+            }
+        });
+
+        closeAdminBtn.addEventListener('click', () => showStep('step-1'));
+
+        // Add Member to Firestore
+        addMemberBtn.addEventListener('click', async () => {
+            const name = newMemberInput.value.trim();
+            if (!name) return;
+
+            // Check duplicate
+            if (allParticipants.some(p => p.name.toLowerCase() === name.toLowerCase())) {
+                alert("This name is already in the list!");
+                return;
+            }
+
+            addMemberBtn.disabled = true;
+            try {
+                // Reset existing matches if a new person joins
+                const resetPromises = allParticipants.map(p => 
+                    updateDoc(doc(db, "secret_santa_participants", p.id), { assignedTo: null, hasChecked: false })
+                );
+                await Promise.all(resetPromises);
+
+                await addDoc(participantsCol, {
+                    name: name,
+                    assignedTo: null,
+                    hasChecked: false
+                });
+                newMemberInput.value = '';
+            } catch (e) {
+                alert("Error saving to Firebase: " + e.message);
+            }
+            addMemberBtn.disabled = false;
+        });
+
+        // Delete Member from Firestore
+        window.deleteMember = async (id) => {
+            try {
+                await deleteDoc(doc(db, "secret_santa_participants", id));
+                // Reset remaining matches so nobody gets matched to deleted person
+                const remaining = allParticipants.filter(p => p.id !== id);
+                const resetPromises = remaining.map(p => 
+                    updateDoc(doc(db, "secret_santa_participants", p.id), { assignedTo: null, hasChecked: false })
+                );
+                await Promise.all(resetPromises);
+            } catch (e) {
+                alert("Error deleting: " + e.message);
+            }
+        };
+
+        // Reset All Matches
+        resetMatchesBtn.addEventListener('click', async () => {
+            if (confirm("Reset all matches? Everyone will be able to draw a new name.")) {
+                const resetPromises = allParticipants.map(p => 
+                    updateDoc(doc(db, "secret_santa_participants", p.id), { assignedTo: null, hasChecked: false })
+                );
+                await Promise.all(resetPromises);
+                alert("All matches reset successfully!");
+            }
+        });
+
+        function renderAdminList() {
+            adminMemberList.innerHTML = '';
+            if (allParticipants.length === 0) {
+                adminMemberList.innerHTML = '<p style="text-align:center; color:#888; font-size:12px; padding:10px;">No members added yet.</p>';
+                return;
+            }
+            allParticipants.forEach(p => {
+                const item = document.createElement('div');
+                item.className = 'admin-list-item';
+                item.innerHTML = `
+                    <div>
+                        <span>${p.name}</span>
+                        <span class="badge ${p.hasChecked ? '' : 'pending'}">${p.hasChecked ? 'Checked' : 'Pending'}</span>
+                    </div>
+                    <button class="delete-btn" onclick="deleteMember('${p.id}')">✕</button>
+                `;
+                adminMemberList.appendChild(item);
+            });
+        }
+
+        // Generate Twinkling Stars
+        function createStars() {
+            const container = document.getElementById('stars-container');
+            for (let i = 0; i < 45; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                const size = Math.random() * 3 + 1.5;
+                star.style.width = size + 'px';
+                star.style.height = size + 'px';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.setProperty('--duration', (Math.random() * 3 + 1.5) + 's');
+                container.appendChild(star);
+            }
+        }
+
+        // Generate Falling Snowflakes
+        function createSnowflakes() {
+            const snowChars = ['❄', '❅', '❆'];
+            for (let i = 0; i < 25; i++) {
+                const flake = document.createElement('div');
+                flake.className = 'snowflake';
+                flake.textContent = snowChars[Math.floor(Math.random() * snowChars.length)];
+                flake.style.left = Math.random() * 100 + 'vw';
+                flake.style.animationDuration = (Math.random() * 6 + 6) + 's';
+                flake.style.fontSize = (Math.random() * 10 + 10) + 'px';
+                document.body.appendChild(flake);
+            }
+        }
+
+        createStars();
+        createSnowflakes();
+    </script>
+</body>
+</html>
